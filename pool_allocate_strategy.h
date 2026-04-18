@@ -62,12 +62,14 @@ public:
 
         freeList_ = reinterpret_cast< FreeNode* >( static_cast< char* >( raw ) + sizeof( ChunkHeader ) );
         FreeNode* current = freeList_;
+        LOG( "Node size: " << nodeSize_ << " Nodes per chunk: " << nodesPerChnk_ );
 
         for ( std::size_t i = 0; i < nodesPerChnk_ - 1; ++i )
         {
             char* nextPtr = reinterpret_cast< char* >( current ) + nodeSize_;
             current->next = reinterpret_cast< FreeNode* >( nextPtr );
             current = current->next;
+           // LOG( "New node created.\n " << "\tAddress:" << current );
         }
         current->next = nullptr;
     }
@@ -79,11 +81,13 @@ public:
         assert( countObj == 1 && "The pool strategy is not intended for arrays" );
         if ( !freeList_ )
         {
+            LOG( "FreeList is not free" );
             CreateNewChunk();
         }
 
         void* ptr = freeList_;
         freeList_ = freeList_->next;
+        LOG( "Ptr allocated: " << ptr );
         return ptr;
     }
 
@@ -99,6 +103,7 @@ public:
         FreeNode* node = static_cast< FreeNode* >( ptr );
         node->next = freeList_;
         freeList_ = node;
+        LOG( "Ptr deallocated: " << ptr );
     }
 
 private:
@@ -110,7 +115,7 @@ private:
         ChunkHeader* newChnk = static_cast< ChunkHeader* >( raw );
         newChnk->nextChnk = chnkHead_;
         chnkHead_ = newChnk;
-        LOG( "New chunk created.\n " << "\tAddress:" << newChnk << "\n" );
+        LOG( "New chunk created.\n " << "\tAddress:" << newChnk );
         freeList_ = reinterpret_cast< FreeNode* >( static_cast< char* >( raw ) + sizeof( ChunkHeader ) );
         FreeNode* current = freeList_;
 
