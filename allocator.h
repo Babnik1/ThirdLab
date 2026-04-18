@@ -1,4 +1,3 @@
-#include <map>
 
 
 template< typename T, class AllocationStrategy  >
@@ -37,7 +36,7 @@ public:
     /// @tparam T - Тип этого класса.
     /// @param other Аллокатор.
     MyOwnAllocator( const MyOwnAllocator< T, AllocationStrategy >& other ) noexcept
-            : m_allocation_strategy{ other.mAllocationStrategy_ }
+            : mAllocationStrategy_{ other.mAllocationStrategy_ }
     {}
 
     /// @brief Конструктор копирования со сменой типов.
@@ -46,7 +45,7 @@ public:
     /// @param other Аллокатор.
     template< typename U >
     MyOwnAllocator( const MyOwnAllocator< U, AllocationStrategy >& other ) noexcept
-            : m_allocation_strategy{ other.mAllocationStrategy_ }
+            : mAllocationStrategy_{ other.mAllocationStrategy_ }
     {}
 
     /// @brief Аллокация памяти для объекта.
@@ -55,7 +54,7 @@ public:
     T* allocate( std::size_t countObj )
     {
         assert( mAllocationStrategy_ && "Not initialized allocation strategy" );
-        return static_cast< T* >( mAllocationStrategy_->allocate( countObj * sizeof( T ) ) );
+        return static_cast< T* >( mAllocationStrategy_->allocate( countObj ) );
     }
 
     /// @brief Деаллокация памяти.
@@ -64,7 +63,7 @@ public:
     void deallocate( void* memoryPtr, std::size_t countObj )
     {
         assert( mAllocationStrategy_ && "Not initialized allocation strategy" );
-        mAllocationStrategy_->deallocate( memoryPtr, countObj * sizeof( T ) );
+        mAllocationStrategy_->deallocate( memoryPtr );
     }
 
     /// @brief Функция размещения объекта в подготовленной памяти.

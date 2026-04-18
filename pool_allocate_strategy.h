@@ -1,6 +1,7 @@
 #include <cstddef>
+#include <new>
 
-template< std::size_t CHUNK_SIZE = 16'384u >
+
 class PoolStrategy
 {
 
@@ -11,22 +12,29 @@ class PoolStrategy
 
 
     /// @brief Структура одного блока памяти.
-    struct ChunkHeader
+    struct alignas( std::max_align_t ) ChunkHeader
     {
-        ChunkHeader* nextChnk;                ///< Указатель на следующий блок.
+        ChunkHeader* nextChnk;              ///< Указатель на следующий блок.
     };
 
-    std::size_t nodeSize_;              ///< Размер ноды.
-    std::size_t nodesPerChnk_;          ///< Кол-во нод, размещаемых в одном блоке памяти.
-    FreeNode* freeList_ = nullptr;      ///< Указатель на свободные ноды в блоке.
-    ChunkHeader* chnkHead_ = nullptr;   ///< Голова списка всех выделенных блоков памяти.
+    std::size_t nodeSize_;                  ///< Размер ноды.
+    std::size_t nodesPerChnk_;              ///< Кол-во нод, размещаемых в одном блоке памяти.
+    FreeNode* freeList_ = nullptr;          ///< Указатель на свободные ноды в блоке.
+    ChunkHeader* chnkHead_ = nullptr;       ///< Голова списка всех выделенных блоков памяти.
 
 public:
-    explicit PoolStrategy( std::size_t nodeSize, std::size_t nodesPerChnk = 64 )
-        : nodeSize_{ nodeSize < sizeof( FreeNode ) ? sizeof( FreeNode ) : nodeSize }
-        , nodesPerChnk_{ nodesPerChnk }
-    {}
 
+    /// @brief Дефолтный конструктор.
+    explicit PoolStrategy( std::size_t capacity, std::size_t objSize )
+        : nodesPerChnk_{ capacity }
+    {
+        std::size_t alignment = alignof( std::max_align_t );
+        std::size_t size = ( objSize < sizeof( FreeNode ) ) ? sizeof( FreeNode ) : objSize;
+        nodeSize_ = ( size + alignment - 1 ) & ~( alignment - 1 );
+        init();
+    };
+
+    /// @brief Деструктор.
     ~PoolStrategy()
     {
         while ( chnkHead_ )
@@ -38,8 +46,34 @@ public:
         }
     }
 
-    void* allocate()
+    /// @brief Инициализация стратегии выделения памяти.
+    void init()
     {
+        if ( chnkHead_ )
+        {
+            return;
+        }
+        void* raw = ::operator new( sizeof( ChunkHeader ) + ( nodesPerChnk_ * nodeSize_ ) );
+        chnkHead_ = static_cast< ChunkHeader* >( raw );
+        chnkHead_->nextChnk = nullptr;
+
+        freeList_ = reinterpret_cast< FreeNode* >( static_cast< char* >( raw ) + sizeof( ChunkHeader ) );
+        FreeNode* current = freeList_;
+
+        for ( std::size_t i = 0; i < nodesPerChnk_ - 1; ++i )
+        {
+            char* nextPtr = reinterpret_cast< char* >( current ) + nodeSize_;
+            current->next = reinterpret_cast< FreeNode* >( nextPtr );
+            current = current->next;
+        }
+        current->next = nullptr;
+    }
+
+    /// @brief Аллоцировать память.
+    /// @return Указатель на начало аллоцированной памяти.
+    void* allocate( std::size_t countObj )
+    {
+        assert( countObj == 1 && "The pool strategy is not intended for arrays" );
         if ( !freeList_ )
         {
             CreateNewChunk();
@@ -50,6 +84,8 @@ public:
         return ptr;
     }
 
+    /// @brief Деаллоцировать память.
+    /// @param ptr Указатель на память, которую нужно освободить.
     void deallocate( void* ptr )
     {
         if ( !ptr )
@@ -64,11 +100,23 @@ public:
 
 private:
 
+    /// @brief Создать новый чанк.
     void CreateNewChunk()
     {
-        std::size_t headerSize = sizeof( ChunkHeader );
+        void* raw = ::operator new( sizeof( ChunkHeader ) + ( nodesPerChnk_ * nodeSize_ ) );
+        ChunkHeader* newChnk = static_cast< ChunkHeader* >( raw );
+        newChnk->nextChnk = chnkHead_;
+        chnkHead_ = newChnk;
 
+        freeList_ = reinterpret_cast< FreeNode* >( static_cast< char* >( raw ) + sizeof( ChunkHeader ) );
+        FreeNode* current = freeList_;
 
-
+        for ( std::size_t i = 0; i < nodesPerChnk_ - 1; ++i )
+        {
+            char* nextPtr = reinterpret_cast< char* >( current ) + nodeSize_;
+            current->next = reinterpret_cast< FreeNode* >( nextPtr );
+            current = current->next;
+        }
+        current->next = nullptr;
     }
 }
