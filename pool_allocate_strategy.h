@@ -1,5 +1,8 @@
 #include <cstddef>
+#include <cassert>
 #include <new>
+
+#include "log.h"
 
 
 class PoolStrategy
@@ -107,7 +110,7 @@ private:
         ChunkHeader* newChnk = static_cast< ChunkHeader* >( raw );
         newChnk->nextChnk = chnkHead_;
         chnkHead_ = newChnk;
-
+        LOG( "New chunk created.\n " << "\tAddress:" << newChnk << "\n" );
         freeList_ = reinterpret_cast< FreeNode* >( static_cast< char* >( raw ) + sizeof( ChunkHeader ) );
         FreeNode* current = freeList_;
 
@@ -119,4 +122,4 @@ private:
         }
         current->next = nullptr;
     }
-}
+};

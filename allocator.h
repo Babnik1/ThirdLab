@@ -1,4 +1,4 @@
-
+#include <cassert>
 
 template< typename T, class AllocationStrategy  >
 class MyOwnAllocator
