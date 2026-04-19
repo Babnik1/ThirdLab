@@ -8,46 +8,46 @@ on:
   pull_request:
     branches: [ main ]
 
-  jobs:
-    build:
-      runs-on: ubuntu-latest
-      permissions:
-        contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-      steps:
-      - uses: actions/checkout@v3
+    steps:
+    - uses: actions/checkout@v3
 
-      - name: Install Google Test
-        run: |
-          sudo apt-get update
-          sudo apt install -y libgtest-dev cmake
-          cd /usr/src/googletest
-          sudo cmake .
-          sudo cmake --build .
-          sudo cmake --install .
+    - name: Install Google Test
+      run: |
+        sudo apt-get update
+        sudo apt install -y libgtest-dev cmake
+        cd /usr/src/googletest
+        sudo cmake .
+        sudo cmake --build .
+        sudo cmake --install .
 
-      - name: Configure & Build Debug (for Tests)
-        run: |
-          cmake -B build_debug -S . -DCMAKE_BUILD_TYPE=Debug
-          cmake --build build_debug
+    - name: Configure & Build Debug (for Tests)
+      run: |
+        cmake -B build_debug -S . -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build_debug
 
-      - name: Test
-        run: |
-          cd ${{github.workspace}}/build_debug
-          ctest --output-on-failure
+    - name: Test
+      run: |
+        cd ${{github.workspace}}/build_debug
+        ctest --output-on-failure
 
-      - name: Configure & Build Release (for Artifacts)
-        run: |
-          cmake -B build_release -S . -DCMAKE_BUILD_TYPE=Release
-          cmake --build build_release
+    - name: Configure & Build Release (for Artifacts)
+      run: |
+        cmake -B build_release -S . -DCMAKE_BUILD_TYPE=Release
+        cmake --build build_release
 
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-        with:
-          files: |
-            custom_memory
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+      with:
+        files: |
+          custom_memory
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
