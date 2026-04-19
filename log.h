@@ -7,11 +7,7 @@
 
 #include <iostream>
 
-#ifndef NDEBUG 
-    #define DEBUG
-#endif
-
-#ifdef DEBUG
+#ifndef NDEBUG
     #define LOG( message ) std::cerr << "[DEBUG]: " << __FILE__ << ":" << __LINE__ << " " << message << "\n"
 #else
     #define LOG( message )
