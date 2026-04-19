@@ -1,6 +1,15 @@
+#pragma once
+
+/// @file
+/// 
+/// Лог для отладки.
+///
+
 #include <iostream>
 
-#define DEBUG
+#ifndef NDEBUG 
+    #define DEBUG
+#endif
 
 #ifdef DEBUG
     #define LOG( message ) std::cerr << "[DEBUG]: " << __FILE__ << ":" << __LINE__ << " " << message << "\n"

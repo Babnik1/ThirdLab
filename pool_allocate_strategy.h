@@ -1,3 +1,10 @@
+#pragma once
+
+/// @file
+/// 
+/// Класс стратегии выделения памяти для связных контейнеров.
+///
+
 #include <cstddef>
 #include <cassert>
 #include <new>
@@ -8,6 +15,7 @@
 class PoolStrategy
 {
 
+    /// @brief Структура, соделжащая указатель на следующую свободную ноду.
     struct FreeNode
     {
         FreeNode* next;
@@ -27,7 +35,9 @@ class PoolStrategy
 
 public:
 
-    /// @brief Дефолтный конструктор.
+    /// @brief Конструктор.
+    /// @param[in] capacity Кол-во элементов, для которых нужно выделить память.
+    /// @param[in] objSize Размер одного элемента.
     explicit PoolStrategy( std::size_t capacity, std::size_t objSize )
         : nodesPerChnk_{ capacity }
     {
@@ -69,14 +79,15 @@ public:
             char* nextPtr = reinterpret_cast< char* >( current ) + nodeSize_;
             current->next = reinterpret_cast< FreeNode* >( nextPtr );
             current = current->next;
-           // LOG( "New node created.\n " << "\tAddress:" << current );
         }
         current->next = nullptr;
     }
 
     /// @brief Аллоцировать память.
+    /// @param[in] countObj Кол-во объектов на которые нужно аллоцировать память.
+    /// @param[in] size Неиспользуемый параметр.
     /// @return Указатель на начало аллоцированной памяти.
-    void* allocate( std::size_t countObj )
+    void* allocate( std::size_t countObj, [[maybe_unused]] std::size_t size )
     {
         assert( countObj == 1 && "The pool strategy is not intended for arrays" );
         if ( !freeList_ )
@@ -92,7 +103,7 @@ public:
     }
 
     /// @brief Деаллоцировать память.
-    /// @param ptr Указатель на память, которую нужно освободить.
+    /// @param[in] ptr Указатель на память, которую нужно освободить.
     void deallocate( void* ptr )
     {
         if ( !ptr )

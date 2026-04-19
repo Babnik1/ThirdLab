@@ -1,3 +1,11 @@
+#pragma once
+
+/// @file
+/// 
+/// Класс кастомного аллокатора.
+///
+
+
 #include <cassert>
 
 template< typename T, class AllocationStrategy  >
@@ -26,7 +34,7 @@ public:
     MyOwnAllocator() = default;
 
     /// @brief Конструктор.
-    /// @param strategy Стратегия выделения памяти.
+    /// @param[in] strategy Стратегия выделения памяти.
     explicit MyOwnAllocator( AllocationStrategy& strategy ) noexcept
             : mAllocationStrategy_{ &strategy }
     {}
@@ -34,7 +42,7 @@ public:
     /// @brief Точный конструктор копирования. 
     /// @details <int> -> <int>.
     /// @tparam T - Тип этого класса.
-    /// @param other Аллокатор.
+    /// @param[in] other Аллокатор.
     MyOwnAllocator( const MyOwnAllocator< T, AllocationStrategy >& other ) noexcept
             : mAllocationStrategy_{ other.mAllocationStrategy_ }
     {}
@@ -49,17 +57,17 @@ public:
     {}
 
     /// @brief Аллокация памяти для объекта.
-    /// @param countObj Количество объектов.
+    /// @param[in] countObj Количество объектов.
     /// @return Указатель на готовый объект.
     T* allocate( std::size_t countObj )
     {
         assert( mAllocationStrategy_ && "Not initialized allocation strategy" );
-        return static_cast< T* >( mAllocationStrategy_->allocate( countObj ) );
+        return static_cast< T* >( mAllocationStrategy_->allocate( countObj, sizeof( T ) ) );
     }
 
     /// @brief Деаллокация памяти.
-    /// @param memoryPtr Указатель на начало памяти, которую нужно деаллоцировать.
-    /// @param countObj Количество объектов, которые нужно деаллоцировать.
+    /// @param[in] memoryPtr Указатель на начало памяти, которую нужно деаллоцировать.
+    /// @param[in] countObj Количество объектов, которые нужно деаллоцировать.
     void deallocate( void* memoryPtr, std::size_t countObj )
     {
         assert( mAllocationStrategy_ && "Not initialized allocation strategy" );
@@ -68,8 +76,8 @@ public:
 
     /// @brief Функция размещения объекта в подготовленной памяти.
     /// @tparam U - Любой тип объекта.
-    /// @param ptr Указатель на объект.
-    /// @param ...args - Аргументы.
+    /// @param[in] ptr Указатель на объект.
+    /// @param[in] ...args - Аргументы.
     template< typename U, typename... Args >
     void construct( U* ptr, Args... args )
     {
@@ -90,12 +98,16 @@ private:
 
 };
 
+/// @brief Перегрузка опратора ==.
+/// @return true - равность, false - неравность.
 template < typename T, typename U, class AllocationStrategy >
 bool operator==( const MyOwnAllocator< T, AllocationStrategy >& lhs, const MyOwnAllocator< U, AllocationStrategy >& rhs )
 {
     return lhs.mAllocationStrategy_ == rhs.mAllocationStrategy_;
 }
 
+/// @brief Перегрузка опратора !=.
+/// @return true - неравность, false - равность.
 template < typename T, typename U, class AllocationStrategy >
 bool operator!=( const MyOwnAllocator< T, AllocationStrategy >& lhs, const MyOwnAllocator< U, AllocationStrategy >& rhs )
 {
