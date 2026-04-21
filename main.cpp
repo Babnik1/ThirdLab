@@ -6,6 +6,9 @@
 #include "vector.h"
 #include "linear_allocate_strategy.h"
 
+constexpr int aroundNodeSize = 48;          ///< Примерный размер ноды.
+constexpr int count = 10;                   ///< Число элементов для которых аллоцируем память.
+
 
 /// @brief Создание факториала числа.
 /// @param n Число из которого нужно получить факториал.
@@ -25,7 +28,7 @@ int main()
 
     /// Выделили пространство под 10 элементов, но ниже будем заполнять 20-ю.
     /// Этим демонтрируется расширяемость выделенной памяти.
-    PoolStrategy plStrategy{ 10, 48 };
+    PoolStrategy plStrategy{ count, aroundNodeSize };
 
     using MyMapAllocator = MyOwnAllocator< std::pair< const int, int >, PoolStrategy >;
     std::map< int, int, std::less< int >, MyMapAllocator > myMap( std::less< int >(), MyMapAllocator{ plStrategy } );
@@ -47,11 +50,11 @@ int main()
 
     /// Выделили 10 байт, что не хватит на 10 чисел, которыми заполнится ниже.
     /// Так же демонстрируется расширяемость.
-    LinearStrategy linStrategy{ 10 };
+    LinearStrategy linStrategy{ count };
 
     using MyVecAllocator = MyOwnAllocator< int, LinearStrategy >;
     MyOwnVector< int, MyVecAllocator > vector ( MyVecAllocator{ linStrategy } );
-    for ( int i = 0; i < 10; ++i )
+    for ( int i = 0; i < count; ++i )
     {
         vector.push_back( i );
     }
